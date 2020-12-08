@@ -1,0 +1,35 @@
+{
+  "name": "mini-mvcs-express-utils",
+  "version": "0.0.1",
+  "description": "Small library for loading routes for express and adding options for templating and some other hacks",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --no-opts test/**.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nardhar/mini-mvcs-express-utils.git"
+  },
+  "keywords": [
+    "express"
+  ],
+  "author": "Felix Carreño",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nardhar/mini-mvcs-express-utils/issues"
+  },
+  "homepage": "https://github.com/nardhar/mini-mvcs-express-utils#readme",
+  "dependencies": {
+    "mini-mvcs-readdir-sync": "^0.1.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^7.15.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "mocha": "^8.2.1"
+  }
+}
