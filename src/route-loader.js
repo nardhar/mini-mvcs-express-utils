@@ -3,6 +3,7 @@
 
 const http = require('http');
 const readdirSync = require('mini-mvcs-readdir-sync');
+const callbackBuilder = require('./callback-builder');
 
 // getting all methods for a express.Router
 const httpMethods = http.METHODS ? http.METHODS.map((method) => {
@@ -32,6 +33,9 @@ const createFakeRouter = (router, options) => {
     ...options.statusCode,
   };
 
+  // validating the callback types, it will throw an error if not properly configured
+  callbackBuilder.validateTypeCallbacks(options.typeCallbacks);
+
   // returning an object that has the same methods as a express.Router
   return {
     // returning the express router in case we would want to avoid all the templater stack
@@ -45,33 +49,14 @@ const createFakeRouter = (router, options) => {
       return {
         ...httpMethodsObject,
         [method]: (pathParam, ...args) => {
-          const callbackList = args.slice(0, args.length - 1)
-          .map((callback) => {
-            // usually the callback is not a function,
-            const typeofCallback = typeof callback;
-            // so in that case we run the callback per type so we run some additional code
-            if (typeofCallback !== 'function') {
-              if (typeof options.typeCallbacks === 'object') {
-                // the execution of the callback should return a middleware function for express.Router
-                return options.typeCallbacks[typeofCallback]({ path: pathParam, method, callback });
-              }
-              if (Array.isArray(options.typeCallbacks)) {
-                // it searches which callback should be created in options
-                const typeCallbackFound = options.typeCallbacks.find((tc) => {
-                  return tc.conditions({ type: typeofCallback, path: pathParam, method });
-                });
-                if (typeCallbackFound) {
-                  // the execution of the callback should return a middleware function for express.Router
-                  return typeCallbackFound.callback({ path: pathParam, method, callback });
-                }
-              }
-            }
-            return callback;
-          })
-          .filter((callback) => {
-            // if in any case the callback is not a function, then it filters it out
-            return typeof callback !== 'function';
-          })
+          const callbackList = callbackBuilder.build(
+            // slicing the last callback because it is the actual result to respond to the request
+            args.slice(0, args.length - 1),
+            pathParam,
+            method,
+            options,
+          )
+          // adding the sliced callback
           .concat((req, res, next) => {
             // wrapping last callback with a Promise in case its result is not a Promise
             return Promise.resolve(args[args.length - 1](req, res, next))
@@ -85,6 +70,7 @@ const createFakeRouter = (router, options) => {
             })
             .catch(next);
           });
+          // mounting the builded callbackList in the real express router
           router[method](pathParam, ...callbackList);
         },
       };
